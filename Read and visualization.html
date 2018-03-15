@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Visualization of government projects</title>
+	<script src="bower_components/jquery/dist/jquery.min.js" type="text/javascript"></script>
+    <script src="bower_components/underscore/underscore.js" type="text/javascript"></script>
+    <script src="bower_components/d3/d3.min.js" type="text/javascript"></script>
+
+    <!-- You need this line if you're NOT using a Node server -->
+    <script type="text/javascript" src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://d3js.org/d3.v4.js"></script>
+    <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/container.css">
+    	<script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
+	<script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+</head>
+<style>
+	.tooltip{  
+    position: absolute;  
+    width: 160px;  
+    height: auto;  
+    font-family: simsun;  
+    font-size: 14px;  
+    text-align: center;  
+    color: white;  
+    border-width: 2px solid black;  
+    background-color: black;  
+    border-radius: 5px;  
+}  
+  
+.tooltip:after{   
+    content: '';  
+    position: absolute;  
+    bottom: 100%;  
+    left: 20%;  
+    margin-left: -8px;  
+    width: 0;  
+    height: 0;  
+    border-bottom: 12px solid black;  
+    border-right: 12px solid transparent;  
+    border-left: 12px solid transparent;  
+}  
+
+
+.body {
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        width: 960px;
+        height: 500px;
+        position: relative;
+    }
+
+    .svg {
+        width: 100%;
+        height: 100%;
+        position: center;
+    }
+
+    .toolTip {
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        position: absolute;
+        display: none;
+        width: auto;
+        height: auto;
+        background: none repeat scroll 0 0 white;
+        border: 0 none;
+        border-radius: 8px 8px 8px 8px;
+        box-shadow: -3px 3px 15px #888888;
+        color: black;
+        font: 12px sans-serif;
+        padding: 5px;
+        text-align: center;
+    }
+
+    .text {
+        font: 8px sans-serif;
+        color: white;
+    }
+    .text.value {
+        font-size: 80%;
+        fill: white;
+    }
+
+    .axisHorizontal path{
+        fill: none;
+    }
+
+    .axisHorizontal .tick line {
+        stroke-width: 1;
+        stroke: rgba(0, 0, 0, 0.2);
+    }
+
+    .bar {
+        fill: steelblue;
+        fill-opacity: .9;
+    }
+    .container {
+    	width: 500px,
+    	height: 500px,
+    	float: left;
+    }
+</style>
+<body>
+		
+	<script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
+	<script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+	<div>
+	<script type="text/javascript">
+		var AgencyName = [];
+		var StartDate = [];
+		var CompleteDate = [];
+		var PlanedDate = [];
+		var Cost = [];
+		var PlanedCost = [];
+
+		d3.csv("data.csv", function(error, csvdata){
+			if (error) {
+				console.log(error);
+			}
+			else{
+				//console.log(csvdata);
+				for (var i = 0; i < csvdata.length; i++) {
+					name = csvdata[i].Agency_Name;
+					startdate = csvdata[i].Start_Date;
+					cost = csvdata[i].Actual_Cost;
+					Completedate = csvdata[i].Completion_Date_B1;
+					plandate = csvdata[i].Planned_Project_Completion_Date_B2;
+					planedcost = csvdata[i].Planned_Cost;
+					AgencyName.push(name);
+					StartDate.push(startdate);
+					Cost.push(cost);
+					CompleteDate.push(Completedate);
+					PlanedDate.push(PlanedDate);
+					PlanedCost.push(planedcost);
+				}
+				//console.log(PlanedCost);
+				//console.log(AgencyName);
+			}
+		var Differences = [];
+		var Realcost = [];
+		var dataset1 = [];  //Differences
+		var dataset2 = [];  //Real cost
+		var dataset3 = [];  //Planned cost
+		var d=0;
+		for (var i = 0; i < Cost.length; i++) {
+			Differences = {
+				Name : AgencyName[i],
+				Difference : Cost[i]-PlanedCost[i],
+			}
+			Realcost = {
+				Name : AgencyName[i],
+				Cost : Cost[i],
+			}
+			Plannedcost = {
+				Name : AgencyName[i],
+				Plannedcost : PlanedCost[i],
+			}
+			dataset1.push(Differences);
+			dataset2.push(Realcost);
+			dataset3.push(Plannedcost);
+		}
+		//console.log(dataset1);
+		var expensesByName = d3.nest().key(function(d) {return d.Name;}).entries(dataset1);
+		//console.log(expensesByName);
+
+		var DifferencesSum = d3.nest().key(function(d) {return d.Name;}).rollup(function(v) {return d3.sum(v, function(d) {return d. Difference;});}).entries(dataset1);
+		//console.log(DifferencesSum);
+
+		var CostSum = d3.nest().key(function(d) {return d.Name;}).rollup(function(v) {return d3.sum(v, function(d) {return d. Cost;});}).entries(dataset2);
+		//console.log(CostSum);
+		//console.log()
+
+		var PlannedSum = d3.nest().key(function(d) {return d.Name;}).rollup(function(v) {return d3.sum(v, function(d) {return d. Plannedcost;});}).entries(dataset3);
+		//console.log(PlannedSum);
+
+		var costvalue = CostSum.map(function(d) {return d.values;});
+		var name = CostSum.map(function(d) {return d.key;});
+		//console.log(costvalue);
+		//console.log(name);
+		var percent = [];
+		for (var i = 0; i < costvalue.length; i++) {
+			var temp = costvalue[i]/d3.sum(costvalue);
+			percent[i] = temp.toFixed(3);
+		}
+		var dataset = [];
+		for (var i = 0; i < name.length; i++) {
+			if (percent[i]>0.02) {
+				temp = [name[i], costvalue[i], percent[i]];
+				dataset.push(temp);
+			}
+			else{
+				temp = [name[i], costvalue[i], percent[i]];
+				smallcost.push(temp);
+			}
+			
+		}
+		//temp = d3.sum(smallcost);
+		var sum = 0;
+		var sum_p = 0;
+		for (var i = 0; i < smallcost.length; i++) {
+			sum = Number(sum) + Number(smallcost[i][1]);
+			sum_p = Number(sum_p) + Number(smallcost[i][2])
+			console.log(sum);
+		}
+		temp = ["Others", sum, ];
+		dataset.push(temp);
+		console.log(dataset);
+
+		var width = 600;
+		var height = 600;
+		var svg = d3.select("body")
+					.append("svg")
+					.attr("width",width)
+					.attr("height", height);
+		var pie = d3.layout.pie().value(function(d){
+			return d[1];
+		});
+		var piedata = pie(dataset);
+		var outerRadius=width/3;
+		var innerRadius=0;
+		var arc=d3.svg.arc()
+					.innerRadius(innerRadius)
+					.outerRadius(outerRadius);
+		var color=d3.scale.category20();
+
+		var arcs = svg.selectAll("g")
+						.data(piedata)
+						.enter()
+						.append("g")
+						.attr("transform","translate("+(width/2)+","+(height/2)+")");
+		arcs.append("path")
+			.attr("fill", function(d,i){
+				return color(i);
+			})
+			.attr("d", function(d){
+				return arc(d);
+			})
+		//inside the arcs
+		console.log(dataset);
+		arcs.append("text")
+			.attr("transform", function(d){
+				var x=arc.centroid(d)[0]*1.4;
+        		var y=arc.centroid(d)[1]*1.4;  
+        		return "translate("+x+","+y+")"; 
+			})
+			.attr("text-anchor", "middle")
+			.text(function(d){
+				var percent=Number(d.value)/d3.sum(dataset,function(d){
+					return d[1];
+				})*100;
+				return percent.toFixed(2)+"%";
+			});
+		
+		var tooltip=d3.select("body")
+						.append("div")
+						.attr("class","tooltip")
+						.style("opacity",0.0);
+		arcs.on("mouseover", function(d,i){
+			//console.log(d.data[0]+" 's cost: "+"<br />"+d.data[1]+" $m ")  
+		    tooltip.html(d.data[0]+" 's cost: "+"<br />"+d.data[1].toFixed(2)+" $m ")  
+		        .style("left",(d3.event.pageX)+"px")  
+		        .style("top",(d3.event.pageY+20)+"px")  
+		        .style("opacity",1.0);  
+		    //tooltip.style("box-shadow","10px 0px 0px"+color(i));
+			})
+			.on("mousemove", function(d){
+				tooltip.style("left",(d3.event.pageX)+"px")  
+                .style("top",(d3.event.pageY+20)+"px");  
+			})
+			.on("mouseout", function(d){
+				tooltip.style("opacity",0.0);
+			})
+			function getPixelLength(str,fontsize){  
+		        var curLen=0;  
+		        for(var i=0;i<str.length;i++){  
+		            var code=str.charCodeAt(i);  
+		            var pixelLen=code>255?fontsize:fontsize/2;  
+		            curLen+=pixelLen;  
+		        }  
+		        return curLen;  
+		    }  
+		});
+	</script>
+	</div>
+	<div >
+		<p>
+			There are two visualizations to show the cost of different government projects in United States.
+		</p>
+		<p>
+			The first pie chart shows that the percentage of the cost by each main department. Some departments with small proportions are in the same category, others, because it will be a bad visual performance if we put each small proportion in the chart. Only the proportion shows inside the chart because the names are too long to contain them. I made the interaction that once you move the mouse to a sector, the detailed information will be displayed, which includes the name of agencies and the amount of cost.
+		</p>
+		<p>
+			Before starting a project, the department will make a plan with a planned cost. But usually the actual cost will be different with planned. The second chart is a bar chart that show the difference between planned cost and actual cost in each department. Similarly, the departments with small differences are formed others because the 20 and 200000 cannot be displayed in the same bar chart. We only compare the main departments with relatively big differences. We made a horizontal bar chart for the reason that the agency names are too long. The chart has a linear scale for the bar and once the mouse moves to the bar or the name of departments, the detailed amount of cost difference will be displayed.
+		</p>
+		<p>
+			The audience of the two visualizations should be the national congress department responsible for approval of the project. They can clear that which department spend most money and how is the difference between the real cost and planned. It will help decision maker make more effective choices.
+		</p>
+	</div>
+
+	<script type="text/javascript">
+		var smallcost = [];
+		var Others = [];
+		d3.csv("data.csv", function(error, csvdata) {
+			if(error){
+				console.log(error);
+			}
+			else{
+				for (var i = 0; i < csvdata.length; i++) {
+					name = csvdata[i].Agency_Name;
+					
+					cost = csvdata[i].Lifecycle_Cost;
+
+					planedcost = csvdata[i].Planned_Cost;
+					Cost.push(cost);
+					AgencyName.push(name);
+					PlanedCost.push(planedcost);
+				}
+			}
+			var Differences = [];
+			var dataset = [];
+			var dataset1 = [];
+
+			for (var i = 0; i < Cost.length; i++) {
+				Differences = {
+				Name : AgencyName[i],
+				Difference : Cost[i]-PlanedCost[i],
+			}
+
+			dataset1.push(Differences);
+
+			}
+			var DifferencesSum = d3.nest().key(function(d) {return d.Name;}).rollup(function(v) {return d3.sum(v, function(d) {return d. Difference;});}).entries(dataset1);
+			console.log(DifferencesSum);
+			
+			var value = [];
+			var name = [];
+			value = DifferencesSum.map(function(d) {return d.values;});
+			name = DifferencesSum.map(function(d){ return d.key;});
+
+			for (var i = 0; i < name.length; i++) {
+				dataset[i] = [name[i], value[i]];
+			}
+			var smallcostsum = [];
+			var Cost_Diff = []
+			var temp = [];
+			console.log(dataset[0][1]);
+			for (var i = 0; i < dataset.length; i++) {
+				if (dataset[i][1] < 900) {
+					temp = {
+						Name : dataset[i][0],
+						value : dataset[i][1],
+					}
+					smallcostsum.push(temp);
+				}
+				else{
+					temp = {
+						Name : dataset[i][0],
+						value : dataset[i][1],
+					}
+					Cost_Diff.push(temp);
+				}
+			}
+			
+
+			smallsum = d3.sum(smallcostsum.map(function(d){ return d.value;}));
+			temp = {
+				Name : "Others",
+				value : smallsum,
+			}
+			Cost_Diff.push(temp);
+			console.log(smallsum);
+			console.log(Cost_Diff);
+			
+
+			var div = d3.select("body").append("div").attr("class", "toolTip");
+
+			var axisMargin = 20,
+					margin = 40,
+		            valueMargin = 4,
+		            width = parseInt(d3.select('body').style('width'), 10),
+		            height = parseInt(d3.select('body').style('height'), 10),
+		            barHeight = (height-axisMargin-margin*2)* 0.4/Cost_Diff.length,
+		            barPadding = (height-axisMargin-margin*2)*0.6/Cost_Diff.length,
+		            DifferencesSuma, bar, svg, scale, xAxis, labelWidth = 0;
+
+		    max = d3.max(Cost_Diff, function(d) { return d.value; });
+
+		    svg = d3.select('body')
+		            .append("svg")
+		            .attr("width", width)
+		            .attr("height", height);
+
+		    bar = svg.selectAll("g")
+		            .data(Cost_Diff)
+		            .enter()
+		            .append("g");
+
+		    bar.attr("class", "bar")
+            .attr("cx",0)
+            .attr("transform", function(d, i) {
+                return "translate(" + margin + "," + (i * (barHeight + barPadding) + barPadding) + ")";
+            });
+
+		    bar.append("text")
+		    		.attr("class", "key")
+		            .attr("y", barHeight / 2)
+		            .attr("dy", ".35em") //vertical align middle
+		            .text(function(d){
+		                return d.Name;
+		            }).each(function() {
+		        labelWidth = Math.ceil(Math.max(labelWidth, this.getBBox().width));
+    		});
+
+		    scale = d3.scale.linear()
+            .domain([0, max])
+            .range([0, width - margin*2 - labelWidth]);
+
+		    xAxis = d3.svg.axis()
+		            .scale(scale)
+		            .tickSize(-height + 2*margin + axisMargin)
+		            .orient("bottom");
+
+		    bar.append("rect")
+		            .attr("transform", "translate("+labelWidth+", 0)")
+		            .attr("height", barHeight)
+		            .attr("width", function(d){
+		                return scale(d.value);
+		            });
+
+		    bar.append("text")
+	            .attr("class", "value")
+	            .attr("y", barHeight / 2)
+	            .attr("dx", -valueMargin + labelWidth) //margin right
+	            .attr("dy", ".35em") //vertical align middle
+	            .attr("text-anchor", "end")
+	            .attr("x", function(d){
+	                var width = this.getBBox().width;
+	                return Math.max(width + valueMargin, scale(d.value));
+	            });
+	        bar.on("mousemove", function(d){
+	        	div.style("left", d3.event.pageX+10+"px");
+                div.style("top", d3.event.pageY-25+"px");
+                div.style("display", "inline-block");
+                div.html((d.Name)+"<br>"+(d.value.toFixed(3)));
+	        });
+	        bar.on("mouseout", function(d){
+	        	div.style("display", "none")
+	        });
+	        svg.insert("g",":first-child")
+	        	.attr("class", "axisHorizontal")
+	            .attr("transform", "translate(" + (margin + labelWidth) + ","+ (height - axisMargin - margin)+")")
+	            .call(xAxis);
+		})
+	</script>
+
+</body>
+</html>
